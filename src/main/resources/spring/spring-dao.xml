@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd" default-autowire="byName">
+        
+        
+     <context:component-scan base-package="com.bcy.acitylion.**.dao.*" /> 
+    <!-- 配置整合mybatis过程 -->
+    <context:property-placeholder location="classpath*:jdbc.properties" ignore-unresolvable="true"/>
+
+    <!-- 2.数据库连接池 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="${db.driverClassName}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <!-- 初始连接数 -->
+        <property name="initialSize" value="${db.initialSize}"/>
+        <!-- 最大活动连接数,设置为负值不限制 -->
+        <property name="maxTotal" value="${db.maxTotal}"/>
+        <!-- 最小空闲连接数(生效的前提是timeBetweenEvictionRunsMillis为正数) -->
+        <property name="minIdle" value="${db.minIdle}"/>
+        <!-- 最大空闲连接数,设置负值不限制 -->
+        <property name="maxIdle" value="${db.maxIdle}"/>
+        <!-- 从池中取连接时最大等待时间，超过设置的时间将抛出异常。设置为-1表示无限等待。  -->
+        <property name="maxWaitMillis" value="${db.maxWaitMillis}"/>
+        <property name="defaultAutoCommit" value="${db.defaultAutoCommit}"/>
+        <property name="validationQuery" value="${db.validationQuery}"/>
+        <!--取得对象时是否进行验证，检查对象是否有效，默认为false-->
+        <property name="testOnBorrow" value="${db.testOnBorrow}"/>
+        <property name="poolPreparedStatements" value="${db.poolPreparedStatements}"/>
+        <!-- 空闲对象驱逐线程运行时的休眠毫秒数(可能就是空闲的连接多久被关闭吧) -->
+        <property name="timeBetweenEvictionRunsMillis" value="${db.timeBetweenEvictionRunsMillis}"/>
+        <property name="logAbandoned" value="${db.logAbandoned}"/>
+        <property name="removeAbandonedTimeout" value="${db.removeAbandonedTimeout}"/>
+    </bean>
+
+    <!-- 3.配置SqlSessionFactory对象 -->
+    <bean id="mySqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 注入数据库连接池 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 配置MyBaties全局配置文件:mybatis-config.xml -->
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <!-- 扫描entity包 使用别名 -->
+        <property name="typeAliasesPackage" value="com.bcy.acitylion.**.entity"/>
+        <!-- 扫描sql配置文件:mapper需要的xml文件 -->
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:mapper/**/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 4.配置扫描Dao接口包，动态实现Dao接口，注入到spring容器中 -->
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- 注入sqlSessionFactory -->
+        <property name="sqlSessionFactoryBeanName" value="mySqlSessionFactory"/>
+        <!-- 给出需要扫描Dao接口包 -->
+        <property name="basePackage" value="com.bcy.acitylion.**.dao"/>
+    </bean>
+
+    <!-- 配置事务管理器 -->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 基于注解的方式的事物管理 -->
+    <tx:annotation-driven transaction-manager="txManager"/>
+
+
+</beans>
